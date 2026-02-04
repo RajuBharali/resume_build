@@ -85,6 +85,8 @@ export default function ResumePageClient() {
     const componentRef = useRef<HTMLDivElement>(null);
 
     const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+    const [showDownloadSuccess, setShowDownloadSuccess] = useState(false);
+    const [generatedPdfUrl, setGeneratedPdfUrl] = useState<string | null>(null);
 
     const handleDownloadPdf = async () => {
         if (!componentRef.current || isGeneratingPdf) return;
@@ -119,7 +121,14 @@ export default function ResumePageClient() {
             });
 
             pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
+
+            // Generate Blob URL for "View Resume" feature
+            const blob = pdf.output("blob");
+            const url = URL.createObjectURL(blob);
+            setGeneratedPdfUrl(url);
+
             pdf.save(`${data.personalInfo.fullName.replace(/\s+/g, "_")}_Resume.pdf`);
+            setShowDownloadSuccess(true);
         } catch (error) {
             console.error("PDF Generation failed", error);
         } finally {
@@ -344,12 +353,46 @@ export default function ResumePageClient() {
 
             {/* Processing Overlay */}
             {isGeneratingPdf && (
-                <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex flex-col items-center justify-center text-white">
-                    <div className="bg-white text-foreground p-6 rounded-2xl shadow-2xl flex flex-col items-center gap-4 animate-in zoom-in-95 duration-200">
+                <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex flex-col items-center justify-center text-white p-4">
+                    <div className="bg-white text-foreground p-6 rounded-2xl shadow-2xl flex flex-col items-center gap-4 animate-in zoom-in-95 duration-200 text-center w-full max-w-sm">
                         <Loader2 size={48} className="text-primary animate-spin" />
                         <div className="flex flex-col items-center gap-1">
                             <h3 className="text-xl font-bold">Processing Resume...</h3>
                             <p className="text-muted-foreground text-sm">Please wait while we generate your PDF.</p>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Success Modal */}
+            {showDownloadSuccess && (
+                <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex flex-col items-center justify-center text-white p-4">
+                    <div className="bg-white text-foreground p-8 rounded-[2.5rem] shadow-2xl flex flex-col items-center gap-6 animate-in zoom-in-95 duration-300 text-center w-full max-w-md border border-slate-100">
+                        <div className="w-20 h-20 bg-green-500/10 text-green-600 rounded-full flex items-center justify-center animate-bounce">
+                            <CheckCircle2 size={40} />
+                        </div>
+
+                        <div className="flex flex-col items-center gap-2">
+                            <h3 className="text-2xl font-black tracking-tight">Ready to Land That Job!</h3>
+                            <p className="text-muted-foreground font-medium">Your professional resume has been downloaded successfully.</p>
+                        </div>
+
+                        <div className="flex flex-col sm:flex-row items-center gap-3 w-full">
+                            {generatedPdfUrl && (
+                                <button
+                                    onClick={() => window.open(generatedPdfUrl, "_blank")}
+                                    className="flex-1 flex items-center justify-center gap-2 px-6 py-4 rounded-2xl bg-slate-900 text-white font-bold hover:bg-slate-800 transition-all shadow-lg hover:shadow-xl active:scale-[0.98] w-full"
+                                >
+                                    <Eye size={20} />
+                                    <span>View Resume</span>
+                                </button>
+                            )}
+                            <button
+                                onClick={() => setShowDownloadSuccess(false)}
+                                className="flex-1 flex items-center justify-center gap-2 px-6 py-4 rounded-2xl bg-white text-slate-900 border-2 border-slate-200 font-bold hover:bg-slate-50 transition-all active:scale-[0.98] w-full"
+                            >
+                                <span>Close</span>
+                            </button>
                         </div>
                     </div>
                 </div>
