@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    template: "%s | StudentHub",
-    default: "StudentHub - Your Academic Companion",
+    template: "%s | SimpleTech",
+    default: "SimpleTech - Your Academic Companion",
   },
   description: "One-stop platform for internships, projects, resume building, and notes.",
 };

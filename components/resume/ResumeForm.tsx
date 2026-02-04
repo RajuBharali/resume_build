@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { ResumeData } from "./types";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
 
 interface ResumeFormProps {
     data: ResumeData;
@@ -10,7 +10,23 @@ interface ResumeFormProps {
 }
 
 const ResumeForm = ({ data, onChange }: ResumeFormProps) => {
-    const [activeTab, setActiveTab] = useState<"personal" | "experience" | "education" | "skills">("personal");
+    const [activeTab, setActiveTab] = useState<"personal" | "experience" | "education" | "projects" | "skills">("personal");
+
+    const TAB_ORDER = ["personal", "experience", "education", "projects", "skills"] as const;
+
+    const handleNext = () => {
+        const currentIndex = TAB_ORDER.indexOf(activeTab);
+        if (currentIndex < TAB_ORDER.length - 1) {
+            setActiveTab(TAB_ORDER[currentIndex + 1]);
+        }
+    };
+
+    const handleBack = () => {
+        const currentIndex = TAB_ORDER.indexOf(activeTab);
+        if (currentIndex > 0) {
+            setActiveTab(TAB_ORDER[currentIndex - 1]);
+        }
+    };
 
     const updatePersonalInfo = (field: string, value: string) => {
         onChange({
@@ -84,7 +100,8 @@ const ResumeForm = ({ data, onChange }: ResumeFormProps) => {
             school: "",
             degree: "",
             location: "",
-            graduationDate: "",
+            startDate: "",
+            endDate: "",
             gpa: "",
             honors: ""
         };
@@ -217,11 +234,33 @@ const ResumeForm = ({ data, onChange }: ResumeFormProps) => {
         onChange({ ...data, interests: data.interests.filter((_, i) => i !== index) });
     };
 
+    const addProject = () => {
+        const newProj = {
+            id: Math.random().toString(36).substr(2, 9),
+            name: "",
+            description: "",
+            techUsed: "",
+            link: ""
+        };
+        onChange({ ...data, projects: [...data.projects, newProj] });
+    };
+
+    const removeProject = (id: string) => {
+        onChange({ ...data, projects: data.projects.filter(p => p.id !== id) });
+    };
+
+    const updateProject = (id: string, field: string, value: string) => {
+        onChange({
+            ...data,
+            projects: data.projects.map(p => p.id === id ? { ...p, [field]: value } : p)
+        });
+    };
+
     return (
         <div className="flex flex-col h-full bg-white rounded-3xl border border-border overflow-hidden soft-shadow">
             {/* Tabs */}
             <div className="flex border-b border-border bg-slate-50/50">
-                {(["personal", "experience", "education", "skills"] as const).map((tab) => (
+                {(["personal", "experience", "education", "projects", "skills"] as const).map((tab) => (
                     <button
                         key={tab}
                         onClick={() => setActiveTab(tab)}
@@ -230,7 +269,7 @@ const ResumeForm = ({ data, onChange }: ResumeFormProps) => {
                             : "text-muted hover:text-foreground"
                             }`}
                     >
-                        {tab}
+                        {tab === "experience" ? "Exp." : tab === "education" ? "Edu." : tab}
                     </button>
                 ))}
             </div>
@@ -260,7 +299,7 @@ const ResumeForm = ({ data, onChange }: ResumeFormProps) => {
                                 <Plus size={20} />
                             </button>
                         </div>
-                        {data.workExperience.map((exp) => (
+                        {(data.workExperience || []).map((exp) => (
                             <div key={exp.id} className="p-4 rounded-2xl border border-border bg-slate-50/30 space-y-4">
                                 <div className="flex justify-between items-start">
                                     <Input label="Company" value={exp.company} onChange={(v) => updateExperience(exp.id, "company", v)} />
@@ -291,11 +330,11 @@ const ResumeForm = ({ data, onChange }: ResumeFormProps) => {
 
                                 <div className="space-y-2">
                                     <label className="text-xs font-bold uppercase text-muted">Bullet Points</label>
-                                    {exp.bullets.map((bullet, idx) => (
+                                    {(exp.bullets || []).map((bullet, idx) => (
                                         <div key={idx} className="flex gap-2">
                                             <input
                                                 className="flex-grow p-2 text-sm rounded-xl border border-border focus:ring-2 focus:ring-primary/20 outline-none"
-                                                value={bullet}
+                                                value={bullet || ""}
                                                 onChange={(e) => updateBullet(exp.id, idx, e.target.value)}
                                                 placeholder="Key achievement..."
                                             />
@@ -321,10 +360,10 @@ const ResumeForm = ({ data, onChange }: ResumeFormProps) => {
                                 <Plus size={20} />
                             </button>
                         </div>
-                        {data.education.map((edu) => (
+                        {(data.education || []).map((edu) => (
                             <div key={edu.id} className="p-4 rounded-2xl border border-border bg-slate-50/30 space-y-4">
                                 <div className="flex justify-between items-start">
-                                    <Input label="School / University" value={edu.school} onChange={(v) => updateEducation(edu.id, "school", v)} />
+                                    <Input label="College / University" value={edu.school} onChange={(v) => updateEducation(edu.id, "school", v)} />
                                     <button onClick={() => removeEducation(edu.id)} className="text-red-400 hover:text-red-600 p-2">
                                         <Trash2 size={18} />
                                     </button>
@@ -333,11 +372,38 @@ const ResumeForm = ({ data, onChange }: ResumeFormProps) => {
                                     <Input label="Degree / Major" value={edu.degree} onChange={(v) => updateEducation(edu.id, "degree", v)} />
                                     <Input label="Location" value={edu.location} onChange={(v) => updateEducation(edu.id, "location", v)} />
                                 </div>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <Input label="Graduation Date" value={edu.graduationDate} onChange={(v) => updateEducation(edu.id, "graduationDate", v)} />
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <Input label="Start Date" value={edu.startDate} onChange={(v) => updateEducation(edu.id, "startDate", v)} placeholder="Aug. 2020" />
+                                        <Input label="End Date" value={edu.endDate} onChange={(v) => updateEducation(edu.id, "endDate", v)} placeholder="May 2024" />
+                                    </div>
                                     <Input label="GPA (Optional)" value={edu.gpa || ""} onChange={(v) => updateEducation(edu.id, "gpa", v)} />
                                 </div>
                                 <Input label="Honors / Awards (Optional)" value={edu.honors || ""} onChange={(v) => updateEducation(edu.id, "honors", v)} />
+                            </div>
+                        ))}
+                    </div>
+                )}
+
+                {activeTab === "projects" && (
+                    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2">
+                        <div className="flex justify-between items-center">
+                            <h3 className="text-lg font-bold">Projects</h3>
+                            <button onClick={addProject} className="p-2 rounded-full bg-primary/10 text-primary hover:bg-primary/20 transition-all">
+                                <Plus size={20} />
+                            </button>
+                        </div>
+                        {(data.projects || []).map((proj) => (
+                            <div key={proj.id} className="p-4 rounded-2xl border border-border bg-slate-50/30 space-y-4">
+                                <div className="flex justify-between items-start">
+                                    <Input label="Project Name" value={proj.name} onChange={(v) => updateProject(proj.id, "name", v)} />
+                                    <button onClick={() => removeProject(proj.id)} className="text-red-400 hover:text-red-600 p-2">
+                                        <Trash2 size={18} />
+                                    </button>
+                                </div>
+                                <Input label="Link (Optional)" value={proj.link || ""} onChange={(v) => updateProject(proj.id, "link", v)} placeholder="https://github.com/..." />
+                                <Input label="Tech Used" value={proj.techUsed} onChange={(v) => updateProject(proj.id, "techUsed", v)} placeholder="React, Node.js, etc." />
+                                <Textarea label="Short Description" value={proj.description} onChange={(v) => updateProject(proj.id, "description", v)} placeholder="Briefly describe what the project does and your role..." />
                             </div>
                         ))}
                     </div>
@@ -352,7 +418,7 @@ const ResumeForm = ({ data, onChange }: ResumeFormProps) => {
                                     <Plus size={20} />
                                 </button>
                             </div>
-                            {data.skills.categories.map((cat, catIdx) => (
+                            {(data.skills?.categories || []).map((cat, catIdx) => (
                                 <div key={catIdx} className="p-4 rounded-2xl border border-border bg-slate-50/30 space-y-4">
                                     <div className="flex justify-between items-start gap-4">
                                         <Input label="Category Name (e.g. Languages)" value={cat.name} onChange={(v) => updateSkillCategoryName(catIdx, v)} />
@@ -363,11 +429,11 @@ const ResumeForm = ({ data, onChange }: ResumeFormProps) => {
                                     <div className="space-y-2">
                                         <label className="text-[10px] font-bold uppercase tracking-widest text-muted">Skills</label>
                                         <div className="flex flex-wrap gap-2">
-                                            {cat.items.map((item, itemIdx) => (
+                                            {(cat.items || []).map((item, itemIdx) => (
                                                 <div key={itemIdx} className="flex items-center gap-1 bg-white border border-border px-2 py-1 rounded-lg">
                                                     <input
                                                         className="text-xs focus:outline-none min-w-[60px]"
-                                                        value={item}
+                                                        value={item || ""}
                                                         onChange={(e) => updateSkillItem(catIdx, itemIdx, e.target.value)}
                                                     />
                                                     <button onClick={() => removeSkillItem(catIdx, itemIdx)} className="text-muted hover:text-red-400">
@@ -396,11 +462,11 @@ const ResumeForm = ({ data, onChange }: ResumeFormProps) => {
                                         </button>
                                     </div>
                                     <div className="grid grid-cols-1 gap-2">
-                                        {data.certifications.map((cert, certIdx) => (
+                                        {(data.certifications || []).map((cert, certIdx) => (
                                             <div key={certIdx} className="flex gap-2">
                                                 <input
                                                     className="flex-grow p-2 text-sm rounded-xl border border-border focus:ring-2 focus:ring-primary/20 outline-none"
-                                                    value={cert}
+                                                    value={cert || ""}
                                                     onChange={(e) => updateCertification(certIdx, e.target.value)}
                                                     placeholder="AWS Certified Cloud Practitioner..."
                                                 />
@@ -420,11 +486,11 @@ const ResumeForm = ({ data, onChange }: ResumeFormProps) => {
                                         </button>
                                     </div>
                                     <div className="grid grid-cols-1 gap-2">
-                                        {data.languages.map((lang, langIdx) => (
+                                        {(data.languages || []).map((lang, langIdx) => (
                                             <div key={langIdx} className="flex gap-2">
                                                 <input
                                                     className="flex-grow p-2 text-sm rounded-xl border border-border focus:ring-2 focus:ring-primary/20 outline-none"
-                                                    value={lang}
+                                                    value={lang || ""}
                                                     onChange={(e) => updateLanguage(langIdx, e.target.value)}
                                                     placeholder="English (Fluent)..."
                                                 />
@@ -444,11 +510,11 @@ const ResumeForm = ({ data, onChange }: ResumeFormProps) => {
                                         </button>
                                     </div>
                                     <div className="grid grid-cols-1 gap-2">
-                                        {data.interests.map((it, itIdx) => (
+                                        {(data.interests || []).map((it, itIdx) => (
                                             <div key={itIdx} className="flex gap-2">
                                                 <input
                                                     className="flex-grow p-2 text-sm rounded-xl border border-border focus:ring-2 focus:ring-primary/20 outline-none"
-                                                    value={it}
+                                                    value={it || ""}
                                                     onChange={(e) => updateInterest(itIdx, e.target.value)}
                                                     placeholder="Chess, Hiking..."
                                                 />
@@ -463,6 +529,31 @@ const ResumeForm = ({ data, onChange }: ResumeFormProps) => {
                         </div>
                     </div>
                 )}
+            </div>
+
+            {/* Navigation Footer */}
+            <div className="p-6 border-t border-border bg-gradient-to-r from-slate-50 to-white flex justify-between items-center">
+                <button
+                    onClick={handleBack}
+                    className={`flex items-center gap-2 px-6 py-2.5 rounded-2xl border border-border text-sm font-bold transition-all ${activeTab === "personal"
+                        ? "opacity-0 pointer-events-none"
+                        : "bg-white text-foreground hover:bg-white hover:border-primary/30 hover:text-primary hover:shadow-md active:scale-95"
+                        }`}
+                >
+                    <ChevronLeft className="w-4 h-4" />
+                    Back
+                </button>
+                <div className="flex gap-2">
+                    {activeTab !== "skills" && (
+                        <button
+                            onClick={handleNext}
+                            className="px-10 py-2.5 rounded-2xl bg-primary text-primary-foreground text-sm font-bold hover:bg-primary/90 transition-all soft-shadow flex items-center gap-2 group active:scale-95"
+                        >
+                            Next Step
+                            <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                        </button>
+                    )}
+                </div>
             </div>
         </div>
     );
@@ -480,7 +571,7 @@ const Input = ({ label, value, onChange, placeholder }: InputProps) => (
         <label className="text-[10px] font-bold uppercase tracking-widest text-muted">{label}</label>
         <input
             className="w-full p-3 text-sm rounded-xl border border-border focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none"
-            value={value}
+            value={value || ""}
             onChange={(e) => onChange(e.target.value)}
             placeholder={placeholder}
         />
@@ -499,7 +590,7 @@ const Textarea = ({ label, value, onChange, placeholder }: TextareaProps) => (
         <label className="text-[10px] font-bold uppercase tracking-widest text-muted">{label}</label>
         <textarea
             className="w-full p-3 text-sm rounded-xl border border-border focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none min-h-[100px] resize-y"
-            value={value}
+            value={value || ""}
             onChange={(e) => onChange(e.target.value)}
             placeholder={placeholder}
         />

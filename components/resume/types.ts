@@ -25,7 +25,8 @@ export interface ResumeData {
         school: string;
         degree: string;
         location: string;
-        graduationDate: string;
+        startDate: string;
+        endDate: string;
         gpa?: string;
         honors?: string;
     }[];
@@ -38,6 +39,13 @@ export interface ResumeData {
         }[];
     };
     interests: string[];
+    projects: {
+        id: string;
+        name: string;
+        description: string;
+        techUsed: string;
+        link?: string;
+    }[];
     settings: {
         primaryColor: string;
         theme: "classic" | "modern" | "minimal";

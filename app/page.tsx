@@ -106,7 +106,7 @@ export default function Home() {
 
               <div className="text-center md:text-left relative z-10 flex-1">
                 <h2 className="text-3xl md:text-5xl font-black text-white mb-6 leading-tight">
-                  StudentHub is now <br /> in your pocket!
+                  SimpleTech is now <br /> in your pocket!
                 </h2>
                 <p className="text-primary-foreground/80 text-lg mb-10 max-w-md">
                   Download our mobile app to get instant notifications about job openings and new study materials.

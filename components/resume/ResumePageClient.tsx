@@ -11,55 +11,29 @@ import { Download, Eye, Edit3, CheckCircle2, Palette, Layout, Loader2 } from "lu
 export default function ResumePageClient() {
     const [data, setData] = useState<ResumeData>({
         personalInfo: {
-            fullName: "Jobby McJobface",
-            email: "hey@sheetsresume.com",
-            phone: "(555) 555-5555",
-            location: "Denver, CO",
-            portfolio: "https://portfolio.com",
-            github: "https://github.com/jobby",
-            linkedin: "https://linkedin.com/in/jobby",
-            summary: "Experienced software professional with a passion for building AI-powered tools and optimizing user experiences. Proven track record in product management and full-stack development.",
+            fullName: "",
+            email: "",
+            phone: "",
+            location: "",
+            portfolio: "",
+            github: "",
+            linkedin: "",
+            summary: "",
         },
-        workExperience: [
-            {
-                id: "1",
-                company: "SheetsResume.com",
-                position: "Co-Founder",
-                location: "Remote",
-                startDate: "Aug. 2023",
-                endDate: "Present",
-                description: "Ideation, product management, & marketing for AI-powered Resume Builder.",
-                bullets: [
-                    "SheetsResume.com is an online repository of free and paid resume and job seeking resources used by millions.",
-                    "Ideation, product management, & marketing for AI-powered Resume Builder, Cover Letters, & Mock Interviews.",
-                    "Stack: JavaScript (React); PHP (Laravel + Inertia); Linux (Ubuntu); Nginx; OpenAI; Gemini; MySQL"
-                ],
-                locationType: "Remote",
-            }
-        ],
-        education: [
-            {
-                id: "edu1",
-                school: "University Name",
-                degree: "Bachelor of Science in Computer Science",
-                location: "City, ST",
-                graduationDate: "May 2024",
-                gpa: "3.8/4.0",
-                honors: "Dean's List, Summa Cum Laude"
-            }
-        ],
-        certifications: ["AWS Certified Cloud Practitioner", "Google Data Analytics Professional Certificate"],
-        languages: ["English (Fluent)", "Hindi (Native)"],
+        workExperience: [],
+        education: [],
+        projects: [],
+        certifications: [],
+        languages: [],
         skills: {
             categories: [
-                { name: "Technologies", items: ["React", "TypeScript", "Next.js", "Node.js", "PostgreSQL", "Docker"] },
-                { name: "Tools", items: ["Git", "GitHub Actions", "Vercel", "Figma", "Jira"] }
+                { name: "Skills", items: [] },
             ]
         },
-        interests: ["Weightlifting", "Skiing", "Camping", "Chess"],
+        interests: [],
         settings: {
             primaryColor: "#000000",
-            theme: "classic",
+            theme: "modern",
             fontFamily: "serif",
             fontSize: 14
         }
@@ -84,6 +58,38 @@ export default function ResumePageClient() {
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const componentRef = useRef<HTMLDivElement>(null);
 
+    // Check if site is accessed via HTTP on a network IP (not localhost)
+    const [isInsecureOrigin, setIsInsecureOrigin] = useState(false);
+    const [isLoaded, setIsLoaded] = useState(false);
+
+    React.useEffect(() => {
+        if (typeof window !== "undefined") {
+            const isHttp = window.location.protocol === "http:";
+            const isNotLocalhost = !["localhost", "127.0.0.1"].includes(window.location.hostname);
+            setIsInsecureOrigin(isHttp && isNotLocalhost);
+
+            // Load from Local Storage
+            const saved = localStorage.getItem("resumeData");
+            if (saved) {
+                try {
+                    const parsed = JSON.parse(saved);
+                    // Merge with default to ensure new fields (like projects) exist if missing in old save
+                    setData(prev => ({ ...prev, ...parsed }));
+                } catch (e) {
+                    console.error("Failed to load resume data", e);
+                }
+            }
+            setIsLoaded(true);
+        }
+    }, []);
+
+    // Save to Local Storage
+    React.useEffect(() => {
+        if (isLoaded) {
+            localStorage.setItem("resumeData", JSON.stringify(data));
+        }
+    }, [data, isLoaded]);
+
     const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
     const [showDownloadSuccess, setShowDownloadSuccess] = useState(false);
     const [generatedPdfUrl, setGeneratedPdfUrl] = useState<string | null>(null);
@@ -93,26 +99,76 @@ export default function ResumePageClient() {
 
         setIsGeneratingPdf(true);
 
-        // Dynamic import to avoid SSR issues
         const html2canvas = (await import("html2canvas")).default;
         const { jsPDF } = await import("jspdf");
 
         try {
             const element = componentRef.current;
+
+            // --- SMART PAGINATION LOGIC ---
+            // Create spacers to avoid cutting sections/items in half
+            const PAGE_HEIGHT_PX = 1056; // 11 inches at 96 DPI
+            const TOP_MARGIN_PX = 50; // Extra gap at the top of new pages
+            const sections = element.querySelectorAll("[data-section], [data-item]");
+            const spacers: HTMLDivElement[] = [];
+
+            let currentExtraHeight = 0;
+
+            sections.forEach((section) => {
+                const el = section as HTMLElement;
+                const rect = el.getBoundingClientRect();
+                const containerRect = element.getBoundingClientRect();
+
+                // Position relative to the top of the resume, including shifts from previous spacers
+                const top = (rect.top - containerRect.top) + currentExtraHeight;
+                const bottom = (rect.bottom - containerRect.top) + currentExtraHeight;
+
+                const startPage = Math.floor(top / PAGE_HEIGHT_PX);
+                const endPage = Math.floor((bottom - 2) / PAGE_HEIGHT_PX); // 2px buffer
+
+                const spaceOnPage = top % PAGE_HEIGHT_PX;
+
+                // If it crosses a page OR starts too high on a new page
+                if (startPage !== endPage || (startPage > 0 && spaceOnPage < TOP_MARGIN_PX)) {
+                    let spacerHeight = 0;
+                    if (startPage !== endPage) {
+                        // Push to next page + margin
+                        spacerHeight = (PAGE_HEIGHT_PX - spaceOnPage) + TOP_MARGIN_PX;
+                    } else {
+                        // Just add the missing margin
+                        spacerHeight = TOP_MARGIN_PX - spaceOnPage;
+                    }
+
+                    const spacer = document.createElement("div");
+                    spacer.style.height = `${spacerHeight}px`;
+                    spacer.className = "pdf-spacer";
+                    el.parentNode?.insertBefore(spacer, el);
+                    spacers.push(spacer);
+
+                    currentExtraHeight += spacerHeight;
+                }
+            });
+
             const canvas = await html2canvas(element, {
-                scale: 2, // Higher scale for better quality
+                scale: 2,
                 useCORS: true,
                 logging: false,
                 backgroundColor: "#ffffff",
-                windowWidth: 1200, // Force desktop width to prevent mobile squashing
-                width: 816, // precise 8.5in in @96dpi
+                windowWidth: 1200,
+                width: 816,
             });
+
+            // Cleanup spacers immediately after capture
+            spacers.forEach(s => s.remove());
 
             const imgData = canvas.toDataURL("image/png");
 
-            // Standard US Letter dimensions in mm (matches the CSS w-[8.5in] h-[11in])
-            const pdfWidth = 215.9;
-            const pdfHeight = 279.4;
+            // Dimensions
+            const imgWidth = 215.9; // 8.5in in mm
+            const pageHeight = 279.4; // 11in in mm
+            const imgHeight = (canvas.height * imgWidth) / canvas.width;
+            let heightLeft = imgHeight;
+            let position = 0;
 
             const pdf = new jsPDF({
                 orientation: "portrait",
@@ -120,9 +176,18 @@ export default function ResumePageClient() {
                 format: "letter"
             });
 
-            pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
+            // First page
+            pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+            heightLeft -= pageHeight;
 
-            // Generate Blob URL for "View Resume" feature
+            // Add additional pages if needed
+            while (heightLeft > 1) { // 1mm buffer
+                position = heightLeft - imgHeight;
+                pdf.addPage();
+                pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+                heightLeft -= pageHeight;
+            }
+
             const blob = pdf.output("blob");
             const url = URL.createObjectURL(blob);
             setGeneratedPdfUrl(url);
@@ -259,6 +324,16 @@ export default function ResumePageClient() {
                             </div>
                         </div>
 
+                        {/* Insecure Origin Warning Tip */}
+                        {isInsecureOrigin && (
+                            <div className="mt-2 p-2 bg-amber-50 border border-amber-200 rounded-lg flex items-start gap-2 animate-in fade-in slide-in-from-top-1">
+                                <span className="text-amber-600 mt-0.5"></span>
+                                <p className="text-[10px] text-amber-800 leading-tight">
+                                    <strong>Download Tip:</strong> If Chrome blocks your download, click the <strong>"Not Secure"</strong> badge in the address bar → <strong>Site settings</strong> → Set <strong>Insecure content</strong> to <strong>Allow</strong>.
+                                </p>
+                            </div>
+                        )}
+
                         {/* Mobile Settings Panel (Visible only when toggled) */}
                         {isSettingsOpen && (
                             <div className="sm:hidden flex flex-col gap-4 p-4 bg-white rounded-2xl border border-border mt-1 animate-in slide-in-from-top-2 max-h-[60vh] overflow-y-auto">
@@ -354,7 +429,7 @@ export default function ResumePageClient() {
             {/* Processing Overlay */}
             {isGeneratingPdf && (
                 <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex flex-col items-center justify-center text-white p-4">
-                    <div className="bg-white text-foreground p-6 rounded-2xl shadow-2xl flex flex-col items-center gap-4 animate-in zoom-in-95 duration-200 text-center w-full max-w-sm">
+                    <div className="bg-white text-foreground p-6 rounded-2xl shadow-2xl flex flex-col items-center gap-4 animate-in zoom-in-95 duration-200 text-center w-full max-sm mb-4">
                         <Loader2 size={48} className="text-primary animate-spin" />
                         <div className="flex flex-col items-center gap-1">
                             <h3 className="text-xl font-bold">Processing Resume...</h3>

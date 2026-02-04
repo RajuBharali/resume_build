@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { Menu, X, BookOpen } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { useState } from "react";
+import Logo from "./Logo";
 
 const Header = () => {
     const [isOpen, setIsOpen] = useState(false);
@@ -20,13 +21,8 @@ const Header = () => {
         <header className="sticky top-0 z-50 w-full glass border-b border-border transition-all duration-300">
             <div className="container mx-auto px-4 md:px-6">
                 <div className="flex h-16 items-center justify-between">
-                    <Link href="/" className="flex items-center gap-2 group">
-                        <div className="p-2 rounded-xl bg-primary/10 text-primary group-hover:scale-110 transition-transform">
-                            <BookOpen className="w-6 h-6" />
-                        </div>
-                        <span className="text-xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-                            StudentHub
-                        </span>
+                    <Link href="/" className="flex items-center group">
+                        <Logo className="h-10 w-auto" />
                     </Link>
 
                     {/* Desktop Navigation */}

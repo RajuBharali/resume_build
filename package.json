@@ -1,5 +1,5 @@
 {
-  "name": "studenthub",
+  "name": "simpletech",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -15,6 +15,7 @@
     "lucide-react": "^0.563.0",
     "next": "16.1.6",
     "nextjs-pdf": "^0.2.0",
+    "pdfjs-dist": "^5.4.624",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-to-print": "^3.2.0"

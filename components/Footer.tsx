@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { BookOpen, Github, Twitter, Instagram, Mail, Phone, MapPin } from "lucide-react";
+import { Github, Twitter, Instagram, Mail, Phone, MapPin } from "lucide-react";
+import Logo from "./Logo";
 
 const Footer = () => {
     return (
@@ -10,13 +11,8 @@ const Footer = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-12">
                     {/* Logo & About */}
                     <div className="flex flex-col gap-6">
-                        <Link href="/" className="flex items-center gap-2 group">
-                            <div className="p-2 rounded-xl bg-primary/10 text-primary">
-                                <BookOpen className="w-6 h-6" />
-                            </div>
-                            <span className="text-xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-                                StudentHub
-                            </span>
+                        <Link href="/" className="flex items-center group">
+                            <Logo className="h-10 w-auto" />
                         </Link>
                         <p className="text-muted leading-relaxed">
                             The ultimate platform for college students to excel in their academic and professional journey.
@@ -62,15 +58,11 @@ const Footer = () => {
                         <ul className="flex flex-col gap-4">
                             <li className="flex items-center gap-3 text-muted">
                                 <Mail size={18} className="text-primary" />
-                                <span>support@studenthub.com</span>
-                            </li>
-                            <li className="flex items-center gap-3 text-muted">
-                                <Phone size={18} className="text-primary" />
-                                <span>+1 (555) 000-0000</span>
+                                <span>info@simpletech.com</span>
                             </li>
                             <li className="flex items-center gap-3 text-muted">
                                 <MapPin size={18} className="text-primary" />
-                                <span>University Road, Knowledge City</span>
+                                <span>Guwahati, Assam</span>
                             </li>
                         </ul>
                     </div>
@@ -78,10 +70,10 @@ const Footer = () => {
 
                 <div className="pt-8 border-t border-border flex flex-col md:flex-row justify-between items-center gap-4">
                     <p className="text-sm text-muted">
-                        © {new Date().getFullYear()} StudentHub Platform. All rights reserved.
+                        © {new Date().getFullYear()} SimpleTech Platform. All rights reserved.
                     </p>
                     <p className="text-sm text-muted">
-                        Designed with ❤️ for Students
+                        Designed and Developed by Students of Department of ETC 6th Semester
                     </p>
                 </div>
             </div>
